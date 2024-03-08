@@ -1,7 +1,7 @@
 Sub RenomearObjetosComNomeDaCamada()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -25,7 +25,7 @@ End Sub
 Sub ExcluirCamadasVazias()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     Dim camadasExcluidas As Integer
     
     ' Referência ao documento ativo
@@ -85,7 +85,7 @@ End Sub
 Sub RenomearObjetos()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -124,7 +124,7 @@ Sub MoverObjetosParaCamada()
     Dim doc As Document
     Dim pagina As Page
     Dim objeto As Shape
-    Dim camada As Layer
+    Dim camada As layer
     
     ' Referência ao documento ativo
     Set doc = ActiveDocument
@@ -198,6 +198,9 @@ End Sub
 Sub PreparaGrid()
     ' Verifica se o gerenciador de objetos está aberto
     Dim gerenciadorAberto As Boolean
+    
+    'AbrirJanelaObjetos
+    
     gerenciadorAberto = VerificarGerenciadorObjetos()
 
     ' Se o gerenciador de objetos estiver aberto, continue com o código
@@ -278,5 +281,19 @@ Sub ObterPosicaoXY()
         MsgBox "Nenhum objeto selecionado.", vbExclamation
     End If
 End Sub
+
+Sub AbrirJanelaObjetos()
+    ' Declaração de variável para armazenar a janela de encaixe
+    Dim objWindow As Window
+    
+    ' Adiciona a janela "Objetos"
+    Set objWindow = Application.AddWindow("ObjectManager")
+    
+    ' Exibe a janela "Objetos"
+    objWindow.Visible = True
+End Sub
+
+
+
 
 

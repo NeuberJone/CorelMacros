@@ -69,7 +69,7 @@ End Sub
 Sub CorrigeGridRaglanGolaV()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     
     ' Referência ao documento ativo
     Set doc = ActiveDocument
@@ -94,7 +94,7 @@ End Sub
 Sub CorrigeGridRaglan()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     
     ' Referência ao documento ativo
     Set doc = ActiveDocument
@@ -119,7 +119,7 @@ End Sub
 Sub ExcluirCamada1()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     
     ' Referência ao documento ativo
     Set doc = ActiveDocument
@@ -141,7 +141,7 @@ End Sub
 Sub CorrigeLinhaOuro()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -193,7 +193,7 @@ End Sub
 Sub VerificarCamadasDuplicadas()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     Dim nomesCamadas As Object
     Dim nomeCamada As String
     Dim duplicadas As Boolean
@@ -230,8 +230,14 @@ Sub VerificarCamadasDuplicadas()
 End Sub
 
 Sub ImportarClipBoard()
-    ' Grabado el 05/03/2024
+    ' Gravado em 05/03/2024
     Dim impopt As StructImportOptions
+    Dim impflt As ImportFilter
+    Dim s1 As Shape
+    Dim targetLayer As layer
+    Dim i As Integer
+    
+    ' Cria as opções de importação
     Set impopt = CreateStructImportOptions
     With impopt
         .MaintainLayers = True
@@ -240,17 +246,63 @@ Sub ImportarClipBoard()
             .TargetColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
         End With
     End With
-    Dim impflt As ImportFilter
+    
+    ' Importa o arquivo para a camada atual
     Set impflt = ActivePage.ActiveLayer.ImportEx("C:\Users\Design 4\Downloads\clipboard.ai", 1283, impopt)
     impflt.Finish
-    Dim s1 As Shape
+    
+    ' Obtém o objeto de forma ativo após a importação
     Set s1 = ActiveShape
+    
+    ' Copia todo o conteúdo da camada atual
+    ActivePage.ActiveLayer.shapes.All.CreateSelection
+    
+    ' Verifica as camadas para encontrar a primeira camada disponível para colar o conteúdo copiado
+    For i = 1 To ActivePage.Layers.Count
+        If ActivePage.Layers(i).Name <> "Linhas-guia" And ActivePage.Layers(i).Name <> "#Layer 1" Then
+            Set targetLayer = ActivePage.Layers(i)
+            Exit For
+        End If
+    Next i
+    
+    ' Se a primeira camada disponível for encontrada, cole o conteúdo copiado nela
+    If Not targetLayer Is Nothing Then
+        ActiveSelection.Copy
+        targetLayer.Paste
+    End If
+    
+    ApagarCamadasLayer1
+    
 End Sub
+
+Function ApagarCamadasLayer1() As Integer
+    Dim layer As layer
+    Dim countDeleted As Integer
+    
+    ' Inicializa o contador de camadas excluídas
+    countDeleted = 0
+    
+    ' Percorre todas as camadas
+    For Each layer In ActivePage.Layers
+        ' Verifica se o nome da camada é "#Layer 1" e a exclui se for
+        If layer.Name = "#Layer 1" Then
+            layer.Delete
+            ' Incrementa o contador de camadas excluídas
+            countDeleted = countDeleted + 1
+        End If
+    Next layer
+    
+    ' Retorna o número de camadas excluídas
+    ApagarCamadasLayer1 = countDeleted
+End Function
+
+
+
 
 Sub MoverCamadaParaTopo()
     Dim pagina As Page
     'Dim camada As Layer
-    Dim primeiraCamada As Layer
+    Dim primeiraCamada As layer
     
     ' Referência à página ativa
     Set pagina = ActiveDocument.ActivePage
@@ -266,7 +318,7 @@ End Sub
 Sub MoverCamadaParaFundo()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As Layer
+    Dim camada As layer
     Dim ultimaCamada As String
     Dim quantidadeDeCamadas As Integer
     
@@ -394,3 +446,27 @@ Function ConverteMmEmPontos(ByVal valorMm As Double) As Double
     ConverteMmEmPontos = valorMm * pontosPorMm
 End Function
 
+Sub Macro1()
+    ' Recorded 08/03/2024
+    Dim impopt As StructImportOptions
+    Set impopt = CreateStructImportOptions
+    With impopt
+        .MaintainLayers = True
+        With .ColorConversionOptions
+            .SourceColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
+            .TargetColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
+        End With
+    End With
+    Dim impflt As ImportFilter
+    Set impflt = ActivePage.Layers("#Layer 1").ImportEx("C:\Users\Design 4\Downloads\clipboard.ai", 1283, impopt)
+    impflt.Finish
+    Dim s1 As Shape
+    Set s1 = ActiveShape
+    Dim lr1 As layer
+    Set lr1 = ActivePage.CreateLayer("#Layer 1")
+    s1.Move -32.292469, 37.253906
+    ActivePage.Layers("#Layer 1").Activate
+    ActiveLayer.shapes.All.CreateSelection
+    ActiveSelection.MoveToLayer lr1
+    lr1.shapes(1).OrderToFront
+End Sub
