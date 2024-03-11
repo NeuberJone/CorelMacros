@@ -1,7 +1,7 @@
 Sub RenomearObjetosComNomeDaCamada()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -25,7 +25,7 @@ End Sub
 Sub ExcluirCamadasVazias()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim camadasExcluidas As Integer
     
     ' Referência ao documento ativo
@@ -85,7 +85,7 @@ End Sub
 Sub RenomearObjetos()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -124,7 +124,7 @@ Sub MoverObjetosParaCamada()
     Dim doc As Document
     Dim pagina As Page
     Dim objeto As Shape
-    Dim camada As layer
+    Dim camada As Layer
     
     ' Referência ao documento ativo
     Set doc = ActiveDocument

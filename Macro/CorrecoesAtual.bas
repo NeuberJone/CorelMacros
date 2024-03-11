@@ -1,7 +1,7 @@
 Sub RenomearObjetosAgrupados()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim grupo As Shape
     Dim subItem As Shape
     
@@ -66,7 +66,7 @@ End Function
 Sub RenomearCamadas()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim partes As Variant
     
     ' Referência ao documento ativo
@@ -93,7 +93,7 @@ End Sub
 Sub ExcluirCamadasVazias()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim camadasExcluidas As Integer
     
     ' Referência ao documento ativo
@@ -123,10 +123,10 @@ End Sub
 Sub OrganizarOrdemCamadas()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
-    Dim camada2 As layer
+    Dim camada As Layer
+    Dim camada2 As Layer
     Dim primeiraCamada As String
-    Dim camadaAtual As layer
+    Dim camadaAtual As Layer
     
     
     ' Referência ao documento ativo
@@ -196,7 +196,7 @@ Sub OrganizarOrdemCamadas()
                     If camada2.Name <> primeiraCamada Then
                         If InStr(1, camada2.Name, ".MA.", vbTextCompare) > 0 Then
                             ' Move a camada MA acima da primeira camada
-                            Dim camadaMA As layer
+                            Dim camadaMA As Layer
                             Set camadaMA = ActivePage.Layers(primeiraCamada)
                             camadaMA.MoveAbove camada2
                         End If
@@ -220,7 +220,7 @@ Sub OrganizarOrdemCamadas()
                     If camada2.Name <> primeiraCamada Then
                         If InStr(1, camada2.Name, ".FE.", vbTextCompare) > 0 Then
                             ' Move a camada MA acima da primeira camada
-                            Dim camadaFE As layer
+                            Dim camadaFE As Layer
                             Set camadaFE = ActivePage.Layers(primeiraCamada)
                             camadaFE.MoveAbove camada2
                         End If
@@ -243,7 +243,7 @@ End Sub
 Sub OrganizarPunhos()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim ultimaCamada As String
     Dim quantidadeDeCamadas As Integer
     
@@ -281,7 +281,7 @@ End Function
 Sub RenomearObjetos()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -319,7 +319,7 @@ End Function
 Sub CorrigeGridCamisaMangaCurta()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -351,7 +351,7 @@ End Sub
 Sub CorrigeGridCamisaRaglanMC()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo
@@ -382,7 +382,7 @@ End Sub
 Sub CorrigeGridLinhaOuro()
     Dim doc As Document
     Dim pagina As Page
-    Dim camada As layer
+    Dim camada As Layer
     Dim objeto As Shape
     
     ' Referência ao documento ativo

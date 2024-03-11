@@ -201,3 +201,166 @@ Function ConverteCmEmMedidaCorel(ByVal valorCm As Double) As Double
     ConverteCmEmMedidaCorel = valorCm * pontosPorCm
 End Function
 
+
+
+
+
+
+
+
+Sub PreparaBandeiraParaSaida()
+    PreparaBrindeParaSaida
+    RenomeiaPaginaAtual "Bandeira"
+    SalvaBrinde
+End Sub
+
+Sub PreparaFaixaCapitaoParaSaida()
+    PreparaBrindeParaSaida
+    RenomeiaPaginaAtual "Faixa de Capitão"
+    SalvaBrinde
+End Sub
+
+Function ObterNomeDoLayout() As String
+    Dim userInput As String
+    
+    ' Abre a caixa de diálogo para entrada de texto
+    userInput = InputBox("Qual o nome do Layout?")
+    
+    ' Retorna o nome inserido pelo usuário
+    ObterNomeDoLayout = userInput
+End Function
+
+Sub SalvaBrinde()
+    Dim OrigSelection As ShapeRange
+    Set OrigSelection = ActiveSelectionRange
+    Dim SaveOptions As StructSaveAsOptions
+    Dim NomeArquivo As String
+    
+    ' Obtém o nome do layout do usuário
+    Dim nomeLayout As String
+    nomeLayout = ObterNomeDoLayout()
+    
+    ' Obtém o nome do documento
+    Dim nomeDocumento As String
+    nomeDocumento = RenomeiaDocumentoAtual("Bandeira") ' Modifique conforme necessário
+    
+    ' Define o nome do arquivo
+    NomeArquivo = "Z:\_Rodar\" & nomeLayout & "_" & nomeDocumento & ".cdr"
+    
+    ' Define as opções de salvamento
+    Set SaveOptions = CreateStructSaveAsOptions
+    With SaveOptions
+        .EmbedVBAProject = False
+        .Filter = cdrCDR
+        .IncludeCMXData = False
+        .Range = cdrAllPages
+        .EmbedICCProfile = False
+        .Version = 243
+        .KeepAppearance = True
+    End With
+    
+    ' Salva o documento no local escolhido pelo usuário
+    ActiveDocument.SaveAs NomeArquivo, SaveOptions
+    ActiveDocument.Close
+End Sub
+
+
+
+
+
+
+
+
+
+Sub PreparaBandeiraParaSaida()
+    Dim NomeDocumento As String
+    NomeDocuemnto = "Bandeira"
+    PreparaBrindeParaSaida
+    RenomeiaPaginaAtual NomeDocumento
+    NomeDocumento = NomeDocumento
+    RenomeiaDocumentoAtual NomeDocumento
+    SalvaBrinde NomeDocumento
+End Sub
+
+Sub PreparaFaixaCapitaoParaSaida()
+    Dim NomeDocumento As String
+    NomeDocuemnto = "Faixa_de_Capitão"
+    PreparaBrindeParaSaida
+    RenomeiaPaginaAtual NomeDocumento
+    NomeDocumento = NomeDocumento
+    RenomeiaDocumentoAtual NomeDocumento
+    SalvaBrinde NomeDocumento
+End Sub
+
+Sub RenomeiaDocumentoAtual(NomeArquivo As String)
+    Dim doc As Document
+    Dim pagina As Page
+    
+    ' Referência ao documento ativo
+    Set doc = ActiveDocument
+
+    If NomeArquivo = "SISBolt_" Then
+        ' Verifica se o nome do documento segue o padrão "Sem Título-" seguido de um número
+        If InStr(1, doc.Name, "Sem título-") = 1 Then
+            ' O nome do documento segue o padrão, então definimos o nome do documento como "SISBolt_"
+            doc.Name = "SISBolt_"
+        Else
+            ' O nome do documento não segue o padrão, então mantemos o nome atual do documento
+            doc.Name = Replace(doc.Name, ".cdr", "")
+        End If
+    Else
+        doc.Name = NomeArquivo
+        ' O nome do documento não segue o padrão, então definimos o nome do documento como o nome fornecido
+        doc.Name = Replace(doc.Name, ".cdr", "")
+    End If
+End Sub
+
+Private Sub SalvaBrinde(NomeDocumento As String)
+    Dim OrigSelection As ShapeRange
+    Set OrigSelection = ActiveSelectionRange
+    Dim SaveOptions As StructSaveAsOptions
+    Dim NomeArquivo As String
+    
+    ' Obtém o nome do layout do usuário
+    Dim nomeLayout As String
+    nomeLayout = ObterNomeDoLayout()
+    
+    ' Define o nome do arquivo
+    NomeArquivo = "Z:\Neuber\Brindes\" & nomeLayout & "_" & NomeDocumento & ".cdr"
+    
+    ' Define as opções de salvamento
+    Set SaveOptions = CreateStructSaveAsOptions
+    With SaveOptions
+        .EmbedVBAProject = False
+        .Filter = cdrCDR
+        .IncludeCMXData = False
+        .Range = cdrAllPages
+        .EmbedICCProfile = False
+        .Version = 243
+        .KeepAppearance = True
+    End With
+    
+    ' Salva o documento no local escolhido pelo usuário
+    ActiveDocument.SaveAs NomeArquivo, SaveOptions
+    ActiveDocument.Close
+End Sub
+
+
+
+
+
+
+
+Sub ObterStringDoUsuario()
+    Dim userInput As String
+    
+    ' Abre a caixa de diálogo para entrada de texto
+    userInput = InputBox("Digite uma string:")
+    
+    ' Verifica se o usuário clicou em Cancelar ou deixou o campo em branco
+    If userInput = "" Then
+        MsgBox "Nenhuma string foi inserida."
+    Else
+        MsgBox "Você digitou: " & userInput
+    End If
+End Sub
