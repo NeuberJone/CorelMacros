@@ -1,4 +1,3 @@
-Attribute VB_Name = "Grid"
 Sub AjustaTamanhoDaPagina()
     Dim doc As Document
     Dim pagina As Page
@@ -12,28 +11,201 @@ Sub AjustaTamanhoDaPagina()
     Dim novoX As Double
     Dim novoY As Double
     
-    ' Refer�ncia ao documento ativo
+    ' Referência ao documento ativo
     Set doc = ActiveDocument
     
-    ' Refer�ncia � p�gina ativa
+    ' Referência à página ativa
     Set pagina = doc.ActivePage
     
-    ' Limpa a sele��o
+    ' Limpa a seleção
     'pagina.ClearSelection
     
-    ' Obter largura e altura da p�gina
+    ' Obter largura e altura da página
     larguraPagina = pagina.SizeWidth
     alturaPagina = pagina.SizeHeight
     
-    ' Seleciona todas as formas na p�gina
+    ' Seleciona todas as formas na página
     pagina.shapes.All.CreateSelection
     
-    ' Inicializa as vari�veis de dimens�o
+    ' Inicializa as variáveis de dimensão
     larguraObjetos = pagina.shapes.All.SizeWidth
     alturaObjetos = pagina.shapes.All.SizeHeight
     
-    ' Redimensionar a p�gina
+    ' Redimensionar a página
     pagina.SizeWidth = larguraObjetos + 30
     pagina.SizeHeight = alturaObjetos + 30
     
-    ' C
+    ' Calcular nova posição para os objetos
+    novoX = larguraPagina / 2
+    novoY = alturaPagina / 2
+    
+    ActivePage.shapes.All.CreateSelection
+    ActiveSelection.Move novoX, novoY
+    
+    Correcoes.RenomeiaPaginaAtual "DESIGN"
+End Sub
+
+Sub PreparaGrid()
+    ' Verifica se o gerenciador de objetos está aberto
+    Dim gerenciadorAberto As Boolean
+    
+    'AbrirJanelaObjetos
+    
+    gerenciadorAberto = VerificarGerenciadorObjetos()
+
+    ' Se o gerenciador de objetos estiver aberto, continue com o código
+    If gerenciadorAberto Then
+        RenomearObjetosComNomeDaCamada
+        ActivePage.shapes.All.CreateSelection
+        
+        Correcoes.AgrupaECentralizaObjetos
+        AjustaTamanhoDaPagina
+        Correcoes.CentralizaObjetosNaPagina
+        Correcoes.DesagrupaObjetos
+        Correcoes.MoverObjetosParaCamada
+        Correcoes.RenomearObjetosNoGrid
+        Correcoes.RenomeiaPaginaAtual "DESIGN"
+        Correcoes.RenomearDocumentoAtual "SISBolt_"
+        Utilidades.ExcluirCamadasVazias
+    Else
+        MsgBox "Então deu ruim, abre a bagaça e roda denovo"
+    End If
+End Sub
+
+Sub RenomearObjetosComNomeDaCamada()
+    Dim doc As Document
+    Dim pagina As Page
+    Dim camada As Layer
+    Dim objeto As shape
+    
+    ' Referência ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Referência à página ativa
+    Set pagina = doc.ActivePage
+    
+    ' Percorrer todas as camadas na página
+    For Each camada In pagina.Layers
+        ' Percorrer todos os objetos na camada
+        For Each objeto In camada.shapes
+            ' Renomear o objeto com o nome da camada
+            objeto.Name = camada.Name
+        Next objeto
+    Next camada
+End Sub
+
+Sub PreparaBandeiraParaSaida()
+    Dim NomeDocumento As String
+    NomeDocumento = "Bandeira"
+    
+    PreparaMaterialParaSaida
+    
+    Correcoes.RenomeiaPaginaAtual NomeDocumento
+    NomeDocumento = NomeDocumento
+    Correcoes.RenomearDocumentoAtual NomeDocumento
+    SalvaArquivoMaterial NomeDocumento
+End Sub
+
+Sub PreparaFaixaDeCapitaoParaSaida()
+    Dim NomeDocumento As String
+    NomeDocumento = "Faixa_De_Capitão"
+    
+    PreparaMaterialParaSaida
+    
+    Correcoes.RenomeiaPaginaAtual NomeDocumento
+    NomeDocumento = NomeDocumento
+    Correcoes.RenomearDocumentoAtual NomeDocumento
+    SalvaArquivoMaterial NomeDocumento
+End Sub
+
+Sub PreparaEscudoParaSaida()
+    Dim NomeDocumento As String
+    NomeDocumento = "Escudo"
+    
+    PreparaMaterialParaSaida
+    
+    Correcoes.RenomeiaPaginaAtual NomeDocumento
+    NomeDocumento = NomeDocumento
+    Correcoes.RenomearDocumentoAtual NomeDocumento
+    SalvaArquivoMaterial NomeDocumento
+End Sub
+
+Sub SalvaArquivoMaterial(NomeDocumento As String)
+    Dim OrigSelection As ShapeRange
+    Set OrigSelection = ActiveSelectionRange
+    Dim SaveOptions As StructSaveAsOptions
+    Dim NomeArquivo As String
+    
+    ' Obtém o nome do layout do usuário
+    Dim nomeLayout As String
+    nomeLayout = Utilidades.ObterNomeDoLayout()
+    
+    ' Define o nome do arquivo
+    NomeArquivo = "Z:\Neuber\Brindes\" & nomeLayout & "_" & NomeDocumento & ".cdr"
+    
+    ' Define as opções de salvamento
+    Set SaveOptions = CreateStructSaveAsOptions
+    With SaveOptions
+        .EmbedVBAProject = False
+        .Filter = cdrCDR
+        .IncludeCMXData = False
+        .Range = cdrAllPages
+        .EmbedICCProfile = False
+        .Version = 243
+        .KeepAppearance = True
+    End With
+    
+    ' Salva o documento no local escolhido pelo usuário
+    ActiveDocument.SaveAs NomeArquivo, SaveOptions
+    'ActiveDocument.Close
+End Sub
+
+Sub PreparaMaterialParaSaida()
+    Dim doc As Document
+    Dim pagina As Page
+    Dim larguraObjetos As Double
+    Dim alturaObjetos As Double
+    
+    ' Referência ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Referência à página ativa
+    Set pagina = doc.ActivePage
+    
+    ' Referência à seleção ativa
+    Set selecao = ActiveSelection
+    
+    ' Verifica se há objetos selecionados
+    If selecao.shapes.Count > 0 Then
+        ' Obter largura e altura dos objetos selecionados
+        larguraObjetos = selecao.SizeWidth
+        alturaObjetos = selecao.SizeHeight
+        
+        ' Redimensionar a página para o tamanho dos objetos selecionados
+        pagina.SizeWidth = larguraObjetos
+        pagina.SizeHeight = alturaObjetos
+        Correcoes.CentralizaObjetosNaPagina
+    Else
+        MsgBox "Nenhum objeto selecionado."
+    End If
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
