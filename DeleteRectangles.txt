@@ -1,0 +1,25 @@
+Sub DeleteRectangles()
+    Dim currentPage As Page
+    Dim shp As Shape
+    Dim subShp As Shape
+    Dim i As Integer, j As Integer
+
+    ' Reference the active page
+    Set currentPage = ActiveDocument.ActivePage
+
+    ' Loop through all shapes on the page (backwards to avoid errors when deleting)
+    For i = currentPage.Shapes.Count To 1 Step -1
+        Set shp = currentPage.Shapes(i)
+
+        ' Delete directly if the shape is a rectangle
+        If shp.Type = cdrRectangleShape Then
+            shp.Delete
+        ' If it's a group, iterate through its objects and delete rectangles
+        'ElseIf shp.Type = cdrGroupShape Then
+            'For j = shp.Shapes.Count To 1 Step -1
+                'Set subShp = shp.Shapes(j)
+                'If subShp.Type = cdrRectangleShape Then subShp.Delete
+            'Next j
+        'End If
+    Next i
+End Sub
