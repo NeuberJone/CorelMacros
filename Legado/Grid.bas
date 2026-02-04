@@ -146,7 +146,7 @@ Sub PreparaEscudoParaSaida()
 End Sub
 
 Sub SalvaArquivoMaterial(NomeDocumento As String)
-    Dim OrigSelection As ShapeRange
+    Dim OrigSelection As shapeRange
     Set OrigSelection = ActiveSelectionRange
     Dim SaveOptions As StructSaveAsOptions
     Dim nomeArquivo As String

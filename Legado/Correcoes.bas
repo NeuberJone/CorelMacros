@@ -178,7 +178,7 @@ End Sub
 
 
 Sub AjustarLarguraObjetos()
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Set sr = ActiveSelectionRange
     
     ' Verifica se há uma seleção ativa
@@ -372,14 +372,14 @@ Sub AgrupaECentralizaObjetos()
 End Sub
 
 Sub DesagrupaObjetos()
-    Dim OrigSelection As ShapeRange
+    Dim OrigSelection As shapeRange
     Set OrigSelection = ActiveSelectionRange
-    Dim grp1 As ShapeRange
+    Dim grp1 As shapeRange
     Set grp1 = OrigSelection.UngroupEx
 End Sub
 
 Sub CentralizaObjetosNaPagina()
-    Dim OrigSelection As ShapeRange
+    Dim OrigSelection As shapeRange
     Set OrigSelection = ActiveSelectionRange
     OrigSelection.AlignAndDistribute 3, 3, 2, 0, False, 2
 End Sub
@@ -535,27 +535,4 @@ Function ExisteOutraCamada(page As page) As Boolean
     
     ExisteOutraCamada = False
 End Function
-
-Sub RenomeiaUltimoObjetoDeCadaGrupo()
-    Dim pagina As page
-    Dim shp As shape
-    Dim subShp As shape
-    Dim countSubShapes As Integer
-
-    ' Referência à página ativa
-    Set pagina = ActiveDocument.ActivePage
-
-    ' Percorre todos os objetos da página
-    For Each shp In pagina.shapes
-        If shp.Type = cdrGroupShape Then
-            countSubShapes = shp.shapes.Count
-            If countSubShapes > 0 Then
-                Set subShp = shp.shapes(countSubShapes)
-                subShp.Name = "x"
-            End If
-        End If
-    Next shp
-
-    MsgBox "O último objeto de cada grupo foi renomeado para 'x'.", vbInformation
-End Sub
 

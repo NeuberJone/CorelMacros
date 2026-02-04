@@ -1,62 +1,4 @@
 Attribute VB_Name = "Utilidades"
-#If VBA7 Then
-    Private Declare PtrSafe Function OpenClipboard Lib "user32" (ByVal hwnd As LongPtr) As Long
-    Private Declare PtrSafe Function CloseClipboard Lib "user32" () As Long
-    Private Declare PtrSafe Function EmptyClipboard Lib "user32" () As Long
-    Private Declare PtrSafe Function SetClipboardData Lib "user32" (ByVal wFormat As Long, ByVal hMem As LongPtr) As LongPtr
-    Private Declare PtrSafe Function GlobalAlloc Lib "kernel32" (ByVal wFlags As Long, ByVal dwBytes As LongPtr) As LongPtr
-    Private Declare PtrSafe Function GlobalLock Lib "kernel32" (ByVal hMem As LongPtr) As LongPtr
-    Private Declare PtrSafe Function GlobalUnlock Lib "kernel32" (ByVal hMem As LongPtr) As Long
-    Private Declare PtrSafe Function lstrcpy Lib "kernel32" (ByVal lpString1 As LongPtr, ByVal lpString2 As String) As LongPtr
-#Else
-    Private Declare Function OpenClipboard Lib "user32" (ByVal hwnd As Long) As Long
-    Private Declare Function CloseClipboard Lib "user32" () As Long
-    Private Declare Function EmptyClipboard Lib "user32" () As Long
-    Private Declare Function SetClipboardData Lib "user32" (ByVal wFormat As Long, ByVal hMem As Long) As Long
-    Private Declare Function GlobalAlloc Lib "kernel32" (ByVal wFlags As Long, ByVal dwBytes As Long) As Long
-    Private Declare Function GlobalLock Lib "kernel32" (ByVal hMem As Long) As Long
-    Private Declare Function GlobalUnlock Lib "kernel32" (ByVal hMem As Long) As Long
-    Private Declare Function lstrcpy Lib "kernel32" (ByVal lpString1 As Long, ByVal lpString2 As String) As Long
-#End If
-
-Const CF_TEXT = 1
-Const GMEM_MOVEABLE = &H2
-
-Sub CopiaCaminho()
-    Dim caminhoCompleto As String
-    Dim caminhoPasta As String
-    Dim hGlobalMemory As LongPtr
-    Dim lpMemory As LongPtr
-
-    If ActiveDocument.FullFileName = "" Then
-        MsgBox "O arquivo ainda não foi salvo.", vbExclamation
-        Exit Sub
-    End If
-
-    caminhoCompleto = ActiveDocument.FullFileName
-    caminhoPasta = Left(caminhoCompleto, InStrRev(caminhoCompleto, "\") - 1)
-
-    If OpenClipboard(0&) Then
-        Call EmptyClipboard
-        hGlobalMemory = GlobalAlloc(GMEM_MOVEABLE, Len(caminhoPasta) + 1)
-        If hGlobalMemory <> 0 Then
-            lpMemory = GlobalLock(hGlobalMemory)
-            If lpMemory <> 0 Then
-                Call lstrcpy(lpMemory, caminhoPasta)
-                Call GlobalUnlock(hGlobalMemory)
-                Call SetClipboardData(CF_TEXT, hGlobalMemory)
-            End If
-        End If
-        Call CloseClipboard
-        'MsgBox "Caminho da pasta copiado para a área de transferência:" & vbCrLf & caminhoPasta, vbInformation
-    Else
-        MsgBox "Não foi possível acessar a área de transferência.", vbCritical
-    End If
-End Sub
-
-
-
-
 Sub LimpaObjetosGrid()
     Dim doc As Document
     Dim pagina As page
@@ -141,7 +83,7 @@ End Sub
 
 
 Sub RenomearObjetosSelecionados()
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Dim novoNome As String
     Dim obj As shape
 
@@ -268,7 +210,7 @@ Sub ImportarClipBoard()
 End Sub
 
 Sub ObterPosicaoXY()
-    Dim selecao As ShapeRange
+    Dim selecao As shapeRange
     Dim objeto As shape
     
     ' Verificar se há uma seleção
@@ -435,7 +377,7 @@ End Sub
 
 Sub CodigoTipoSanguineo()
     ' Macro para alterar o nome dos objetos selecionados com base em um critério
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Set sr = ActiveSelectionRange
     
     If VerificarSeETexto() = True Then
@@ -457,7 +399,7 @@ Sub CodigoTipoSanguineo()
 End Sub
 
 Sub CodigoNumero()
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Set sr = ActiveSelectionRange
     
     If VerificarSeETexto() Then
@@ -477,7 +419,7 @@ Sub CodigoNumero()
 End Sub
 
 Sub CodigoNome()
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Set sr = ActiveSelectionRange
     
     If VerificarSeETexto() Then
@@ -497,7 +439,7 @@ Sub CodigoNome()
 End Sub
 
 Sub CodigoApelido()
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Set sr = ActiveSelectionRange
     
     If VerificarSeETexto() Then
@@ -518,7 +460,7 @@ End Sub
 
 Function VerificarSeETexto() As Boolean
     ' Função para verificar se o objeto selecionado é um texto
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Set sr = ActiveSelectionRange
 
     ' Verifica se há uma seleção ativa
@@ -543,7 +485,7 @@ Function VerificarSeETexto() As Boolean
 End Function
 
 Sub AdicionarMamilo()
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Dim s1 As shape
     Dim xPos As Double
     Dim yPos As Double
@@ -635,7 +577,7 @@ End Sub
 
 Sub Contorno()
 
-    Dim OrigSelection As ShapeRange
+    Dim OrigSelection As shapeRange
     Set OrigSelection = ActiveSelectionRange
   
     OrigSelection(1).shapes(2).Style.StringAssign "{""fill"":{""type"":""1"",""primaryColor"":""CMYK255,USER,0,0,0,0,100,cccd19cb-4675-4a5e-8bda-d0bbbaab8af0"",""overprint"":""0"",""winding"":""0"",""screenSpec"":""0,0,45000000,60,0""},""outline"":{""overprint"":""0"",""angle"":""0"",""screenSpec"":""0,0,45000000,60,0"",""matrix"":""1,0,0,0,1,0"",""leftArrowAttributes"":""0|0|0|0|0|0|0"",""behindFill"":""1"",""miterLimit"":""11.478339999999999321289578801952302455902099609375"",""width"":""28222"",""rightArrowAttributes"":""0|0|0|0|0|0|0"",""joinType"":""1"",""variableAttributes"":""0|0"",""projectMatrix"":""1,0,0,0,1,0"",""justification"":""0"",""endCaps"":""1"",""rightArrow"":""|0"",""scaleWithObject"":""1"",""dotLength"":""0"",""color"":""CMYK100,USER,255,255,255,255,100,00000000-0000-0000-0000-000000000000"",""dashDotSpec"":""0"",""dash" & "Adjust"":""0"",""overlapArrow"":""0"",""shareArrow"":""0"",""aspect"":""100"",""leftArrow"":""|0""},""transparency"":{}}"
@@ -691,14 +633,14 @@ Sub DeixaSoCosta()
 End Sub
 
 Sub ContornoRetinho()
-    Dim OrigSelection As ShapeRange
+    Dim OrigSelection As shapeRange
     Set OrigSelection = ActiveSelectionRange
     OrigSelection(1).Style.StringAssign "{""fill"":{""type"":""1"",""overprint"":""0"",""primaryColor"":""CMYK255,USER,0,0,0,0,100,cccd19cb-4675-4a5e-8bda-d0bbbaab8af0"",""winding"":""0""},""outline"":{""type"":""0"",""overprint"":""0"",""screenSpec"":""0,0,45000000,60,0"",""angle"":""0"",""matrix"":""1,0,0,0,1,0"",""aspect"":""100"",""leftArrow"":""|0"",""width"":""40000"",""dashAdjust"":""0"",""joinType"":""1"",""rightArrowAttributes"":""0|0|0|0|0|0|0"",""dashDotSpec"":""0"",""shareArrow"":""0"",""rightArrow"":""|0"",""projectMatrix"":""1,0,0,0,1,0"",""miterLimit"":""5"",""scaleWithObject"":""1"",""color"":""CMYK,USER,0,0,0,100,100,00000000-0000-0000-0000-000000000000"",""overlapArrow"":""0"",""endCaps"":""0"",""behindFill"":""0"",""leftArrowAttributes"":""0|0|0|0|0|0|0"",""justification"":""2"",""dotLength"":""0""},""transparen" & "cy"":{}}"
 End Sub
 
 Sub AplicaContornoReto()
     Dim doc As Document
-    Dim sr As ShapeRange
+    Dim sr As shapeRange
     Dim shape As shape
     Dim subShape As shape
 
@@ -934,223 +876,6 @@ Sub ConfiguraMoldNovo()
     
 End Sub
 
-Sub DeleteRectangles()
-    Dim currentPage As page
-    Set currentPage = ActiveDocument.ActivePage
-    
-    ProcessShapes currentPage.shapes
-End Sub
-
-Private Sub ProcessShapes(shapesCollection As shapes)
-    Dim shp As shape
-    Dim i As Integer
-
-    ' Loop de trás para frente para evitar erro ao deletar
-    For i = shapesCollection.Count To 1 Step -1
-        Set shp = shapesCollection(i)
-
-        ' Ignora grupos
-        If shp.Type = cdrGroupShape Then
-            ' Ignora o grupo e não verifica shapes dentro dele
-        Else
-            ' Se contiver subshapes (como em PowerClip, etc.), percorre
-            If shp.shapes.Count > 0 Then
-                ProcessShapes shp.shapes
-            End If
-
-            ' Se o tipo for curva (por exemplo, retângulo convertido em curvas)
-            If shp.Type = cdrCurveShape Then
-                shp.Delete
-            End If
-        End If
-    Next i
-End Sub
-
-Sub SomaAlturasSelecionadasEmMetros()
-    Dim sel As ShapeRange
-    Dim shp As shape
-    Dim alturaTotal As Double
-    Dim unidade As cdrUnit
-    Dim fatorConversao As Double
-    Dim resultadoTexto As String
-
-    ' Verifica se há seleção
-    If ActiveSelection.shapes.Count = 0 Then
-        MsgBox "Nenhum objeto selecionado.", vbExclamation
-        Exit Sub
-    End If
-
-    Set sel = ActiveSelectionRange
-    alturaTotal = 0
-
-    ' Detecta a unidade atual do documento
-    unidade = ActiveDocument.Unit
-
-    ' Define fator de conversão para metros
-    Select Case unidade
-        Case cdrMillimeter:     fatorConversao = 0.001
-        Case cdrCentimeter:     fatorConversao = 0.01
-        Case cdrMeter:          fatorConversao = 1
-        Case cdrInch:           fatorConversao = 0.0254
-        Case cdrFoot:           fatorConversao = 0.3048
-        Case cdrYard:           fatorConversao = 0.9144
-        Case Else
-            MsgBox "Unidade não reconhecida. Por favor, use milímetros, centímetros ou metros.", vbExclamation
-            Exit Sub
-    End Select
-
-    ' Soma as alturas e converte para metros
-    For Each shp In sel
-        alturaTotal = alturaTotal + shp.SizeHeight * fatorConversao
-    Next shp
-
-    ' Formata o resultado
-    resultadoTexto = Format(alturaTotal, "0.00") & "m"
-
-    ' Copia para a área de transferência
-    CopiaParaAreaDeTransferencia resultadoTexto
-
-    ' Exibe o resultado
-    MsgBox "Altura total: " & resultadoTexto & vbCrLf & _
-           "(valor copiado para a área de transferência)", vbInformation
-End Sub
-
-' Função que copia texto para a área de transferência
-Sub CopiaParaAreaDeTransferencia(texto As String)
-    Dim clipboard As New DataObject
-    clipboard.SetText texto
-    clipboard.PutInClipboard
-End Sub
 
 
-
-Sub SomaMedidasSelecionadas()
-    Dim sel As ShapeRange
-    Dim shp As shape
-    Dim totalAltura As Double
-    Dim totalLargura As Double
-    Dim unidade As cdrUnit
-    Dim fatorConversao As Double
-    Dim escolha As String
-    Dim msg As String
-    Dim textoCopiar As String
-
-    ' Verifica se há seleção
-    If ActiveSelection.shapes.Count = 0 Then
-        MsgBox "Nenhum objeto selecionado.", vbExclamation
-        Exit Sub
-    End If
-
-    ' Pergunta ao usuário qual medida deseja somar
-    escolha = InputBox("O que você deseja somar?" & vbCrLf & vbCrLf & _
-                       "1 - Altura" & vbCrLf & _
-                       "2 - Largura" & vbCrLf & _
-                       "3 - Ambas", "Soma de Medidas", "3")
-
-    If escolha = "" Then Exit Sub ' Cancelado
-    If Not IsNumeric(escolha) Or Val(escolha) < 1 Or Val(escolha) > 3 Then
-        MsgBox "Opção inválida. Use 1, 2 ou 3.", vbExclamation
-        Exit Sub
-    End If
-
-    ' Define o fator de conversão com base na unidade do documento
-    unidade = ActiveDocument.Unit
-    Select Case unidade
-        Case cdrMillimeter:     fatorConversao = 0.001
-        Case cdrCentimeter:     fatorConversao = 0.01
-        Case cdrMeter:          fatorConversao = 1
-        Case cdrInch:           fatorConversao = 0.0254
-        Case cdrFoot:           fatorConversao = 0.3048
-        Case cdrYard:           fatorConversao = 0.9144
-        Case Else
-            MsgBox "Unidade não reconhecida. Por favor, use mm, cm ou m.", vbExclamation
-            Exit Sub
-    End Select
-
-    ' Soma conforme a escolha
-    Set sel = ActiveSelectionRange
-    totalAltura = 0
-    totalLargura = 0
-
-    For Each shp In sel
-        If escolha = "1" Or escolha = "3" Then
-            totalAltura = totalAltura + shp.SizeHeight * fatorConversao
-        End If
-        If escolha = "2" Or escolha = "3" Then
-            totalLargura = totalLargura + shp.SizeWidth * fatorConversao
-        End If
-    Next shp
-
-    ' Monta a mensagem e define o conteúdo a ser copiado
-    msg = sel.Count & " objeto(s) selecionado(s)" & vbCrLf
-
-    If escolha = "1" Then
-        msg = msg & "Altura total: " & Format(totalAltura, "0.00") & " metros"
-        textoCopiar = Replace(Format(totalAltura, "0.00"), ".", ",") & "m"
-        
-    ElseIf escolha = "2" Then
-        msg = msg & "Largura total: " & Format(totalLargura, "0.00") & " metros"
-        textoCopiar = Replace(Format(totalLargura, "0.00"), ".", ",") & "m"
-        
-    ElseIf escolha = "3" Then
-        msg = msg & "Altura total: " & Format(totalAltura, "0.00") & " metros" & vbCrLf
-        msg = msg & "Largura total: " & Format(totalLargura, "0.00") & " metros"
-        textoCopiar = Replace(Format(totalLargura, "0.00"), ".", ",") & "x" & Replace(Format(totalAltura, "0.00"), ".", ",") & "m"
-    End If
-
-    ' Copia o resultado para a área de transferência
-    CopiaParaAreaDeTransferencia textoCopiar
-
-    ' Exibe o resultado
-    MsgBox msg & vbCrLf & vbCrLf & "(valor copiado para a área de transferência)", vbInformation, "Resultado da Soma"
-End Sub
-
-Sub MostrarTipoDeObjetoSelecionado()
-    Dim sel As ShapeRange
-    Dim shp As shape
-    Dim tipoTecnico As String
-    Dim tipoAmigavel As String
-    Dim msg As String
-
-    ' Verifica se há objetos selecionados
-    If ActiveSelection.shapes.Count = 0 Then
-        MsgBox "Nenhum objeto selecionado.", vbExclamation
-        Exit Sub
-    End If
-
-    Set sel = ActiveSelectionRange
-    msg = "Tipo dos objetos selecionados:" & vbCrLf & vbCrLf
-
-    ' Percorre os objetos selecionados
-    For Each shp In sel
-        Select Case shp.Type
-            Case cdrRectangleShape
-                tipoTecnico = "cdrRectangleShape": tipoAmigavel = "Retângulo"
-            Case cdrEllipseShape
-                tipoTecnico = "cdrEllipseShape": tipoAmigavel = "Elipse"
-            Case cdrCurveShape
-                tipoTecnico = "cdrCurveShape": tipoAmigavel = "Curva"
-            Case cdrTextShape
-                tipoTecnico = "cdrTextShape": tipoAmigavel = "Texto"
-            Case cdrGroupShape
-                tipoTecnico = "cdrGroupShape": tipoAmigavel = "Grupo"
-            Case cdrBitmapShape
-                tipoTecnico = "cdrBitmapShape": tipoAmigavel = "Bitmap"
-            Case cdrPolygonShape
-                tipoTecnico = "cdrPolygonShape": tipoAmigavel = "Polígono"
-            Case cdrBlendGroupShape
-                tipoTecnico = "cdrBlendGroupShape": tipoAmigavel = "Blend"
-            Case cdrPowerClipShape
-                tipoTecnico = "cdrPowerClipShape": tipoAmigavel = "PowerClip"
-            Case cdrSymbolShape
-                tipoTecnico = "cdrSymbolShape": tipoAmigavel = "Símbolo"
-            Case Else
-                tipoTecnico = "Desconhecido (" & shp.Type & ")": tipoAmigavel = "Outro"
-        End Select
-
-        msg = msg & "- " & tipoTecnico & " - " & tipoAmigavel & vbCrLf
-    Next shp
-
-    MsgBox msg, vbInformation, "Tipos de Objetos"
-End Sub
 
