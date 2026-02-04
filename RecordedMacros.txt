@@ -1,0 +1,127 @@
+Attribute VB_Name = "RecordedMacros"
+Sub TemporaryMacro()
+    ' Recorded 10/11/2025
+    Dim OrigSelection As ShapeRange
+    Set OrigSelection = ActiveSelectionRange
+    Dim dup1 As ShapeRange
+    Set dup1 = OrigSelection.StepAndRepeat(10, 0#, 0#, 0, ModeY:=0, DirectionY:=2)
+    Dim s1 As shape
+    Set s1 = ActiveLayer.shapes(23).Duplicate(-60.887882, 5.946776)
+    s1.Move -60.887882, 5.946776
+    s1.OrderToFront
+    Dim dup2 As ShapeRange
+    Set dup2 = s1.StepAndRepeat(10, 0#, 0#, 0, ModeY:=0, DirectionY:=2)
+    ActiveDocument.CreateShapeRangeFromArray(ActiveLayer.shapes(25), ActiveLayer.shapes(24), ActiveLayer.shapes(23), s1, dup2).Move -46.420354, -2.929008
+    ActiveDocument.CreateSelection ActiveLayer.shapes(25), ActiveLayer.shapes(24), ActiveLayer.shapes(23), s1, dup2(10), dup2(9), dup2(8), dup2(7), dup2(6), dup2(5), dup2(4)
+    ActiveDocument.AddToSelection dup2(3), dup2(2), dup2(1)
+    ActiveSelection.AlignAndDistribute 3, 0, 0, 0, False, 2
+    ActiveDocument.CreateSelection ActiveLayer.shapes(25), ActiveLayer.shapes(24), ActiveLayer.shapes(23), s1, dup2(10), dup2(9), dup2(8), dup2(7), dup2(6), dup2(5), dup2(4)
+    ActiveDocument.AddToSelection dup2(3), dup2(2), dup2(1)
+    ActiveSelection.AlignAndDistribute 0, 3, 0, 0, False, 2
+    dup2(1).ConvertToCurves
+    dup2(2).ConvertToCurves
+    dup2(3).ConvertToCurves
+    dup2(4).ConvertToCurves
+    dup2(5).ConvertToCurves
+    dup2(6).ConvertToCurves
+    dup2(7).ConvertToCurves
+    dup2(8).ConvertToCurves
+    dup2(9).ConvertToCurves
+    dup2(10).ConvertToCurves
+    s1.ConvertToCurves
+    ActiveLayer.shapes(23).ConvertToCurves
+    ActiveLayer.shapes(24).ConvertToCurves
+    ActiveLayer.shapes(25).ConvertToCurves
+    Dim s2 As shape
+    Set s2 = dup2(1).Duplicate
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -90.317059, 17.239752, 10
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -90.317051, 17.239756, 6
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -90.317055, 17.239756, 4
+    Dim s3 As shape
+    Set s3 = dup2(1).Duplicate
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -96.710811, 13.450862, 4
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -96.166157, 12.906209, 3
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -112.451299, -1.186697, 4
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -113.26828, -2.003673, 5
+    Dim s4 As shape
+    Set s4 = dup2(1).Duplicate
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -102.794169, 17.268689, 4
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -102.794161, 16.786882, 3
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -102.794165, 16.78689, 3
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -102.794161, 16.786894, 4
+    ActiveSelection.Copy
+    Dim createopt As StructCreateOptions
+    Set createopt = CreateStructCreateOptions
+    With createopt
+        .Name = "Sem t�tulo-1"
+        .Units = cdrCentimeter
+        .PageWidth = 45#
+        .PageHeight = 45#
+        .Resolution = 300#
+        .Bleed = 0.4
+        .ColorContext = CreateColorContext2("sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%", BlendingColorModel:=clrColorModelCMYK)
+    End With
+    Dim doc1 As Document
+    Set doc1 = CreateDocumentEx(createopt)
+    ActiveLayer.Paste
+    Dim Paste1 As ShapeRange
+    Set Paste1 = doc1.SelectionRange
+    Dim s5 As shape
+    Set s5 = Paste1(14).Duplicate
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -135.972913, -7.045728, 5
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -136.176091, -7.045728, 7
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -136.332382, -7.045728, 8
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -136.332378, -7.045724, 9
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -136.332378, -7.045724, 10
+    ActiveDocument.CreateShapeRangeFromArray(ActiveDocument.Pages(1).Layers("Camada 1").shapes(25), ActiveDocument.Pages(1).Layers("Camada 1").shapes(24), ActiveDocument.Pages(1).Layers("Camada 1").shapes(23), s1, dup2).Cut
+    Paste1.Delete
+    ActiveLayer.Paste
+    Dim Paste2 As ShapeRange
+    Set Paste2 = doc1.SelectionRange
+    Paste2.AlignAndDistribute 3, 3, 2, 0, False, 2
+    Dim s6 As shape
+    Set s6 = Paste2(14).Duplicate
+    doc1.Undo
+    Paste2.Move -15.353488, 0#
+    Paste2(14).Move -2.053449, 5.781252
+    doc1.Undo
+    Paste2(14).Move 0.284323, 2.432551
+    doc1.Undo
+    doc1.CreateShapeRangeFromArray(Paste2(1), Paste2(2), Paste2(3)).Move 0#, 5.639091
+    Dim s7 As shape
+    Set s7 = ActiveLayer.CreateRectangle(-10.707819, 15.8635, -2.282622, 13.131217)
+    s7.Rectangle.CornerType = cdrCornerTypeRound
+    s7.Rectangle.RelativeCornerScaling = True
+    s7.Fill.ApplyNoFill
+    s7.Outline.SetPropertiesEx 0.007874, OutlineStyles(0), CreateCMYKColor(0, 0, 0, 100), ArrowHeads(0), ArrowHeads(0), cdrFalse, cdrFalse, cdrOutlineButtLineCaps, cdrOutlineMiterLineJoin, 0#, 100, MiterLimit:=5#, Justification:=cdrOutlineJustificationMiddle
+    s7.Move 13.631748, 0#
+    Dim s8 As shape
+    Set s8 = ActiveLayer.CreateRectangle(-11.10152, 10.310823, -1.888921, 7.405713)
+    s8.Rectangle.CornerType = cdrCornerTypeRound
+    s8.Rectangle.RelativeCornerScaling = True
+    s8.Fill.ApplyNoFill
+    s8.Outline.SetPropertiesEx 0.007874, OutlineStyles(0), CreateCMYKColor(0, 0, 0, 100), ArrowHeads(0), ArrowHeads(0), cdrFalse, cdrFalse, cdrOutlineButtLineCaps, cdrOutlineMiterLineJoin, 0#, 100, MiterLimit:=5#, Justification:=cdrOutlineJustificationMiddle
+    s8.Move 15.00598, 0#
+    Dim s9 As shape
+    Set s9 = s7.Duplicate
+    Dim s10 As shape
+    Set s10 = s9.Duplicate
+    Dim s11 As shape
+    Set s11 = s8.Duplicate
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -113.518976, -10.539665, 9
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -113.518972, -10.539669, 8
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -113.518976, -10.539661, 7
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -113.518972, -10.539657, 6
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -113.518976, -10.539657, 5
+    Windows.FindWindow("CorelDRAW - Z:\_Joyce\GALERA DO EXPRESSO\Escudo.cdr*").ActiveView.SetViewPoint -77.554339, 3.102098, 4
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Undo
+    ActiveDocument.Save
+    Windows.CloseAll
+End Sub

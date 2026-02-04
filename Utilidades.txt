@@ -1,0 +1,1156 @@
+Attribute VB_Name = "Utilidades"
+#If VBA7 Then
+    Private Declare PtrSafe Function OpenClipboard Lib "user32" (ByVal hwnd As LongPtr) As Long
+    Private Declare PtrSafe Function CloseClipboard Lib "user32" () As Long
+    Private Declare PtrSafe Function EmptyClipboard Lib "user32" () As Long
+    Private Declare PtrSafe Function SetClipboardData Lib "user32" (ByVal wFormat As Long, ByVal hMem As LongPtr) As LongPtr
+    Private Declare PtrSafe Function GlobalAlloc Lib "kernel32" (ByVal wFlags As Long, ByVal dwBytes As LongPtr) As LongPtr
+    Private Declare PtrSafe Function GlobalLock Lib "kernel32" (ByVal hMem As LongPtr) As LongPtr
+    Private Declare PtrSafe Function GlobalUnlock Lib "kernel32" (ByVal hMem As LongPtr) As Long
+    Private Declare PtrSafe Function lstrcpy Lib "kernel32" (ByVal lpString1 As LongPtr, ByVal lpString2 As String) As LongPtr
+#Else
+    Private Declare Function OpenClipboard Lib "user32" (ByVal hwnd As Long) As Long
+    Private Declare Function CloseClipboard Lib "user32" () As Long
+    Private Declare Function EmptyClipboard Lib "user32" () As Long
+    Private Declare Function SetClipboardData Lib "user32" (ByVal wFormat As Long, ByVal hMem As Long) As Long
+    Private Declare Function GlobalAlloc Lib "kernel32" (ByVal wFlags As Long, ByVal dwBytes As Long) As Long
+    Private Declare Function GlobalLock Lib "kernel32" (ByVal hMem As Long) As Long
+    Private Declare Function GlobalUnlock Lib "kernel32" (ByVal hMem As Long) As Long
+    Private Declare Function lstrcpy Lib "kernel32" (ByVal lpString1 As Long, ByVal lpString2 As String) As Long
+#End If
+
+Const CF_TEXT = 1
+Const GMEM_MOVEABLE = &H2
+
+Sub CopiaCaminho()
+    Dim caminhoCompleto As String
+    Dim caminhoPasta As String
+    Dim hGlobalMemory As LongPtr
+    Dim lpMemory As LongPtr
+
+    If ActiveDocument.FullFileName = "" Then
+        MsgBox "O arquivo ainda n�o foi salvo.", vbExclamation
+        Exit Sub
+    End If
+
+    caminhoCompleto = ActiveDocument.FullFileName
+    caminhoPasta = Left(caminhoCompleto, InStrRev(caminhoCompleto, "\") - 1)
+
+    If OpenClipboard(0&) Then
+        Call EmptyClipboard
+        hGlobalMemory = GlobalAlloc(GMEM_MOVEABLE, Len(caminhoPasta) + 1)
+        If hGlobalMemory <> 0 Then
+            lpMemory = GlobalLock(hGlobalMemory)
+            If lpMemory <> 0 Then
+                Call lstrcpy(lpMemory, caminhoPasta)
+                Call GlobalUnlock(hGlobalMemory)
+                Call SetClipboardData(CF_TEXT, hGlobalMemory)
+            End If
+        End If
+        Call CloseClipboard
+        'MsgBox "Caminho da pasta copiado para a �rea de transfer�ncia:" & vbCrLf & caminhoPasta, vbInformation
+    Else
+        MsgBox "N�o foi poss�vel acessar a �rea de transfer�ncia.", vbCritical
+    End If
+End Sub
+
+
+
+
+Sub LimpaObjetosGrid()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim shape As shape
+    Dim i As Integer
+
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+
+    ' Percorre todas as p�ginas do documento
+    For i = 1 To doc.Pages.Count
+        Set pagina = doc.Pages(i)
+
+        ' Percorre todas as camadas da p�gina atual
+        For Each camada In pagina.Layers
+            ' Percorre os objetos da camada de tr�s para frente (para evitar erro ao excluir)
+            For Each shape In camada.shapes.All
+                ' Verifica se o nome do objeto corresponde a "x" ou "tag"
+                If shape.Name = "x" Or shape.Name = "tag" Then
+                    shape.Delete
+                End If
+            Next shape
+        Next camada
+    Next i
+
+    ' Limpeza de vari�veis
+    Set doc = Nothing
+    Set pagina = Nothing
+End Sub
+
+Sub OrganizarCamadas()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim listaCamadas As New Collection
+    Dim prefixos As Variant
+    Dim sufixos As Variant
+    Dim i As Integer, j As Integer
+    Dim nomeCamada As String
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Refer�ncia � p�gina ativa
+    Set pagina = doc.ActivePage
+    
+    ' Lista de prefixos na ordem desejada
+    prefixos = Array("COL1.", "CAL1.", "CHO1.", "REG1.", "CAM2.", "CAM1.")
+    
+    ' Lista de sufixos na ordem desejada
+    sufixos = Array(".C", ".FE", ".MA")
+    
+    ' Adiciona as camadas em suas respectivas cole��es
+    For i = LBound(prefixos) To UBound(prefixos)
+        For j = LBound(sufixos) To UBound(sufixos)
+            For Each camada In pagina.Layers
+                nomeCamada = prefixos(i) & "*" & sufixos(j)
+                If camada.Name Like nomeCamada Then
+                    listaCamadas.Add camada
+                End If
+            Next camada
+        Next j
+    Next i
+    
+    ' Cria novas camadas na ordem desejada e move os objetos para essas camadas
+    For i = 1 To listaCamadas.Count
+        Set camada = listaCamadas(i)
+        ' Mover a camada para o topo
+        If i = 1 Then
+            ' Se for a primeira camada, move para cima da camada 2
+            camada.MoveAbove pagina.Layers(2)
+        Else
+            ' Caso contr�rio, move para cima da camada anterior da lista
+            camada.MoveAbove listaCamadas(i - 1)
+        End If
+    Next i
+    
+    'MsgBox "Camadas organizadas com sucesso.", vbInformation
+End Sub
+
+
+
+Sub RenomearObjetosSelecionados()
+    Dim sr As ShapeRange
+    Dim novoNome As String
+    Dim obj As shape
+
+    ' Verifica se h� uma sele��o ativa
+    Set sr = ActiveSelectionRange
+    If sr.Count = 0 Then
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Solicita ao usu�rio o novo nome para os objetos selecionados
+    novoNome = InputBox("Digite o novo nome para os objetos selecionados:", "Renomear Objetos")
+
+    ' Verifica se o usu�rio digitou um nome
+    If Len(novoNome) = 0 Then
+        MsgBox "Nenhum nome digitado. Opera��o cancelada.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Renomeia todos os objetos selecionados com o nome digitado
+    For Each obj In sr
+        obj.Name = novoNome
+    Next obj
+
+    MsgBox "Objetos renomeados com sucesso.", vbInformation
+End Sub
+
+
+Sub RenomearObjetosComNomeArquivoSimulador()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim obj As shape
+    Dim nomeArquivo As String
+    Dim i As Integer
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Obt�m o nome do arquivo sem a extens�o
+    nomeArquivo = Left(doc.fileName, InStrRev(doc.fileName, ".") - 1)
+    
+    ' Percorre todas as p�ginas no documento
+    For Each pagina In doc.Pages
+        ' Percorre todas as camadas na p�gina
+        For Each camada In pagina.Layers
+            ' Percorre todos os objetos na camada
+            For i = 1 To camada.shapes.Count
+                Set obj = camada.shapes(i)
+                obj.Name = nomeArquivo
+            Next i
+        Next camada
+    Next pagina
+    
+    MsgBox "Objetos renomeados com sucesso.", vbInformation
+End Sub
+
+
+Sub ImportarGola()
+    ' Grabado el 05/03/2024
+    Dim impopt As StructImportOptions
+    Set impopt = CreateStructImportOptions
+    With impopt
+        .MaintainLayers = True
+        With .ColorConversionOptions
+            .SourceColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
+            .TargetColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
+        End With
+    End With
+    Dim impflt As ImportFilter
+    Set impflt = ActivePage.ActiveLayer.ImportEx("X:\Dados\SISBolt\GOLA.cdr", 1283, impopt)
+    impflt.Finish
+    Dim s1 As shape
+    Set s1 = ActiveShape
+    
+End Sub
+
+Sub ExcluirCamadasVazias()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim camadasExcluidas As Integer
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Refer�ncia � p�gina ativa
+    Set pagina = doc.ActivePage
+    
+    ' Inicializa o contador de camadas exclu�das
+    camadasExcluidas = 0
+    
+    ' Percorre todas as camadas na p�gina
+    For Each camada In pagina.Layers
+        ' Verifica se a camada n�o � especial e se est� vazia
+        If Not camada.IsSpecialLayer And camada.shapes.Count = 0 Then
+            ' Exclui a camada
+            camada.Delete
+            ' Incrementa o contador de camadas exclu�das
+            camadasExcluidas = camadasExcluidas + 1
+        End If
+    Next camada
+End Sub
+
+Sub ImportarClipBoard()
+    ' Grabado el 05/03/2024
+    Dim impopt As StructImportOptions
+    Set impopt = CreateStructImportOptions
+    With impopt
+        .MaintainLayers = True
+        With .ColorConversionOptions
+            .SourceColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
+            .TargetColorProfileList = "sRGB IEC61966-2.1,U.S. Web Coated (SWOP) v2,Dot Gain 20%"
+        End With
+    End With
+    Dim impflt As ImportFilter
+    Set impflt = ActivePage.ActiveLayer.ImportEx("C:\Users\Design 4\Downloads\clipboard.ai", 1283, impopt)
+    impflt.Finish
+    Dim s1 As shape
+    Set s1 = ActiveShape
+    
+    'Correcoes.MoverParaProximaCamada
+    
+End Sub
+
+Sub ObterPosicaoXY()
+    Dim selecao As ShapeRange
+    Dim objeto As shape
+    
+    ' Verificar se h� uma sele��o
+    If Not ActiveSelectionRange Is Nothing Then
+        ' Refer�ncia � sele��o
+        Set selecao = ActiveSelectionRange
+        ' Verificar se h� apenas um objeto selecionado
+        If selecao.Count = 1 Then
+            ' Obter o objeto selecionado
+            Set objeto = selecao(1)
+            ' Obter as coordenadas X e Y do objeto
+            Dim posX As Double
+            Dim posY As Double
+            posX = objeto.PositionX
+            posY = objeto.PositionY
+            ' Exibir as coordenadas X e Y em uma caixa de mensagem
+            MsgBox "Posi��o X: " & posX & vbCrLf & "Posi��o Y: " & posY
+        Else
+            MsgBox "Selecione apenas um objeto.", vbExclamation
+        End If
+    Else
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+    End If
+End Sub
+
+Sub VerificarCamadasDuplicadas()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim nomesCamadas As Object
+    Dim nomeCamada As String
+    Dim duplicadas As Boolean
+    
+    ' Cria um objeto dicion�rio para armazenar os nomes das camadas
+    Set nomesCamadas = CreateObject("Scripting.Dictionary")
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Refer�ncia � p�gina ativa
+    Set pagina = doc.ActivePage
+    
+    ' Percorre todas as camadas na p�gina
+    For Each camada In pagina.Layers
+        ' Verifica se o nome da camada j� est� no dicion�rio
+        If nomesCamadas.Exists(camada.Name) Then
+            ' Se o nome da camada j� existe, exibe uma mensagem informando que h� um nome de camada duplicado
+            MsgBox "A camada " & camada.Name & " est� duplicada."
+            duplicadas = True
+        Else
+            ' Se o nome da camada n�o existe, adiciona ao dicion�rio
+            nomesCamadas.Add camada.Name, True
+        End If
+    Next camada
+    
+    ' Verifica se foram encontradas camadas duplicadas
+    If Not duplicadas Then
+        MsgBox "Tirando o que t� errado, o resto t� certo."
+    End If
+    
+    ' Limpa o dicion�rio
+    nomesCamadas.RemoveAll
+End Sub
+
+Function VerificarGerenciadorObjetos() As Boolean
+    ' Exibe uma mensagem para o usu�rio
+    Dim resposta As VbMsgBoxResult
+    resposta = MsgBox("O Gerenciador de Objetos est� aberto?", vbYesNo, "Verificar Gerenciador de Objetos")
+    
+    ' Retorna true se o usu�rio selecionou "Sim" e false se selecionou "N�o"
+    VerificarGerenciadorObjetos = (resposta = vbYes)
+End Function
+
+Function ObterNomeDoLayout() As String
+    Dim userInput As String
+    
+    ' Abre a caixa de di�logo para entrada de texto
+    userInput = InputBox("Qual o nome do Layout?")
+    
+    ' Retorna o nome inserido pelo usu�rio
+    ObterNomeDoLayout = userInput
+End Function
+
+Sub MoverCamadaParaTopo()
+    Dim pagina As page
+    'Dim camada As Layer
+    Dim primeiraCamada As layer
+    
+    ' Refer�ncia � p�gina ativa
+    Set pagina = ActiveDocument.ActivePage
+    
+    ' Obter a primeira camada
+    Set primeiraCamada = pagina.Layers(2)
+    
+    ' Mover a camada selecionada para o topo
+    ActiveLayer.MoveAbove primeiraCamada
+End Sub
+
+Sub NumerarObjetos()
+    Dim doc As Document
+    Dim pagina As page
+    Dim shapes As shapes
+    Dim numObjetos As Integer
+    Dim i As Integer
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Refer�ncia � p�gina ativa
+    Set pagina = doc.ActivePage
+    
+    ' Refer�ncia aos objetos da p�gina
+    Set shapes = pagina.shapes
+    
+    ' Conta o n�mero de objetos
+    numObjetos = shapes.Count
+    
+    ' Loop reverso para numerar da �ltima para a primeira
+    For i = numObjetos To 1 Step -1
+        ' Define o nome do objeto numerado
+        shapes(i).Name = CStr(numObjetos - i + 1) & " " & shapes(i).Name
+    Next i
+End Sub
+
+Sub ImportarArquivosECentralizar()
+    ' Especifica o caminho da pasta onde os arquivos est�o localizados
+    Dim folderPath As String
+    folderPath = "Z:\Neuber\Import"
+    
+    ' Verifica se a pasta existe
+    If Dir(folderPath, vbDirectory) = "" Then
+        MsgBox "A pasta especificada n�o foi encontrada.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Vari�veis para armazenar a posi��o central na p�gina
+    Dim centerX As Double
+    Dim centerY As Double
+    
+    ' Define a posi��o central na p�gina ativa
+    centerX = ActivePage.SizeWidth / 2
+    centerY = ActivePage.SizeHeight / 2
+    
+    ' Obt�m uma lista de arquivos na pasta
+    Dim fileName As String
+    fileName = Dir(folderPath & "\*.cdr")
+    
+    ' Loop para importar cada arquivo na pasta
+    Do While fileName <> ""
+        ' Importa o arquivo
+        Dim importedShape As shape
+        Set importedShape = ActiveLayer.Import(folderPath & "\" & fileName)
+        
+        ' Centraliza o objeto importado na p�gina
+        importedShape.PositionX = centerX - importedShape.SizeWidth / 2
+        importedShape.PositionY = centerY - importedShape.SizeHeight / 2
+        
+        ' Obt�m o pr�ximo arquivo na pasta
+        fileName = Dir
+    Loop
+    
+    MsgBox "Os arquivos foram importados e centralizados com sucesso.", vbInformation
+End Sub
+
+Sub CodigoTipoSanguineo()
+    ' Macro para alterar o nome dos objetos selecionados com base em um crit�rio
+    Dim sr As ShapeRange
+    Set sr = ActiveSelectionRange
+    
+    If VerificarSeETexto() = True Then
+        ' Para cada objeto na sele��o
+        Dim sh As shape
+        For Each sh In sr
+            If sh.Name = "TS" Then
+                ' Se o nome do objeto for "TS", altere para "Texto Tipo Sangu�neo"
+                sh.Name = "Texto Tipo Sangu�neo"
+            Else
+                ' Se n�o for "TS", altere para "TS"
+                sh.Name = "TS"
+            End If
+        Next sh
+    Else
+        ' Se n�o for texto, exibe uma mensagem informando que o objeto � inv�lido
+        MsgBox "O objeto selecionado n�o � um texto.", vbExclamation
+    End If
+End Sub
+
+Sub CodigoNumero()
+    Dim sr As ShapeRange
+    Set sr = ActiveSelectionRange
+    
+    If VerificarSeETexto() Then
+        ' Para cada objeto na sele��o
+        Dim sh As shape
+        For Each sh In sr
+            If sh.Name = "NU" Then
+                sh.Name = "Texto N�mero"
+            Else
+                sh.Name = "NU"
+            End If
+        Next sh
+    Else
+        ' Se n�o for texto, exibe uma mensagem informando que o objeto � inv�lido
+        MsgBox "O objeto selecionado n�o � texto.", vbExclamation
+    End If
+End Sub
+
+Sub CodigoNome()
+    Dim sr As ShapeRange
+    Set sr = ActiveSelectionRange
+    
+    If VerificarSeETexto() Then
+        ' Para cada objeto na sele��o
+        Dim sh As shape
+        For Each sh In sr
+            If sh.Name = "NO" Then
+                sh.Name = "Texto Nome"
+            Else
+                sh.Name = "NO"
+            End If
+        Next sh
+    Else
+        ' Se n�o for texto, exibe uma mensagem informando que o objeto � inv�lido
+        MsgBox "O objeto selecionado n�o � texto.", vbExclamation
+    End If
+End Sub
+
+Sub CodigoApelido()
+    Dim sr As ShapeRange
+    Set sr = ActiveSelectionRange
+    
+    If VerificarSeETexto() Then
+        ' Para cada objeto na sele��o
+        Dim sh As shape
+        For Each sh In sr
+            If sh.Name = "AP" Then
+                sh.Name = "Texto Apelido"
+            Else
+                sh.Name = "AP"
+            End If
+        Next sh
+    Else
+        ' Se n�o for texto, exibe uma mensagem informando que o objeto � inv�lido
+        MsgBox "O objeto selecionado n�o � texto.", vbExclamation
+    End If
+End Sub
+
+Function VerificarSeETexto() As Boolean
+    ' Fun��o para verificar se o objeto selecionado � um texto
+    Dim sr As ShapeRange
+    Set sr = ActiveSelectionRange
+
+    ' Verifica se h� uma sele��o ativa
+    If sr.Count = 0 Then
+        VerificarSeETexto = False
+        Exit Function
+    End If
+
+    ' Verifica se o objeto � do tipo texto
+    Dim sh As shape
+    Dim isText As Boolean
+    isText = False
+
+    For Each sh In sr
+        If sh.Type = cdrTextShape Then
+            isText = True
+            Exit For
+        End If
+    Next sh
+    
+    VerificarSeETexto = isText
+End Function
+
+Sub AdicionarMamilo()
+    Dim sr As ShapeRange
+    Dim s1 As shape
+    Dim xPos As Double
+    Dim yPos As Double
+    
+    ' Verifica se h� uma sele��o ativa
+    Set sr = ActiveSelectionRange
+    If sr.Count = 0 Then
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Obter a posi��o X e Y do objeto selecionado
+    xPos = sr.shapes(1).PositionX
+    yPos = sr.shapes(1).PositionY
+
+    ' Criar um novo objeto na posi��o centralizada
+    Set s1 = ActiveLayer.CreateEllipse2(xPos, yPos, 1.589224, -1.589224)
+
+    ' Aplicar as propriedades ao novo objeto
+    s1.Fill.ApplyNoFill
+    s1.Outline.SetPropertiesEx 0.007874, OutlineStyles(0), CreateCMYKColor(0, 0, 0, 100), ArrowHeads(0), ArrowHeads(0), cdrFalse, cdrFalse, cdrOutlineButtLineCaps, cdrOutlineMiterLineJoin, 0#, 100, MiterLimit:=5#, Justification:=cdrOutlineJustificationMiddle
+
+    ActiveDocument.ReferencePoint = cdrCenter
+    s1.SetSize 0.07874, 0.07874
+    s1.Fill.UniformColor.CMYKAssign 0, 0, 0, 0
+    s1.Outline.SetNoOutline
+    's1.Style.StringAssign "{""fill"":{""secondaryColor"":""CMYK,USER,0,0,0,0,100,00000000-0000-0000-0000-000000000000"",""primaryColor"":""CMYK255,USER,0,0,0,0,100,cccd19cb-4675-4a5e-8bda-d0bbbaab8af0"",""type"":""1"",""overprint"":""0""},""outline"":{""overprint"":""0"",""width"":""0"",""color"":""CMYK,USER,0,0,0,100,100,00000000-0000-0000-0000-000000000000""},""transparency"":{""mode"":""36""}}"
+
+    ' Mover o objeto para a segunda camada
+    s1.MoveToLayer ActivePage.Layers(2)
+    
+    s1.Name = "Marca��o"
+
+    ' Excluir o objeto original
+    sr.shapes(1).Delete
+
+End Sub
+
+
+
+Sub ApagaGolaEPunhoDePesca()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camadaResult As layer
+    Dim shape As shape
+    Dim grupo As shape
+    Dim subShape As shape
+    Dim excluirGrupo As Boolean
+
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    Set pagina = doc.ActivePage
+
+    ' Refer�ncia � camada "RESULT"
+    On Error Resume Next
+    Set camadaResult = pagina.Layers("RESULT")
+    On Error GoTo 0
+
+    ' Verifica se a camada "RESULT" existe
+    If camadaResult Is Nothing Then
+        MsgBox "A camada 'RESULT' n�o foi encontrada.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Percorre todos os objetos da camada "RESULT"
+    For Each shape In camadaResult.shapes
+        ' Verifica se o objeto � um grupo
+        If shape.Type = cdrGroupShape Then
+            excluirGrupo = False
+            
+            ' Percorre todos os objetos dentro do grupo
+            For Each subShape In shape.shapes
+                ' Verifica se o nome de algum objeto dentro do grupo corresponde aos nomes especificados
+                If subShape.Name = "PunhoPescaE" Or subShape.Name = "PunhoPescaD" Or subShape.Name = "GolaPesca" Then
+                    excluirGrupo = True
+                    Exit For
+                End If
+            Next subShape
+            
+            ' Exclui o grupo se um dos objetos corresponder aos nomes
+            If excluirGrupo Then
+                shape.Delete
+            End If
+        End If
+    Next shape
+
+End Sub
+
+
+Sub Contorno()
+
+    Dim OrigSelection As ShapeRange
+    Set OrigSelection = ActiveSelectionRange
+  
+    OrigSelection(1).shapes(2).Style.StringAssign "{""fill"":{""type"":""1"",""primaryColor"":""CMYK255,USER,0,0,0,0,100,cccd19cb-4675-4a5e-8bda-d0bbbaab8af0"",""overprint"":""0"",""winding"":""0"",""screenSpec"":""0,0,45000000,60,0""},""outline"":{""overprint"":""0"",""angle"":""0"",""screenSpec"":""0,0,45000000,60,0"",""matrix"":""1,0,0,0,1,0"",""leftArrowAttributes"":""0|0|0|0|0|0|0"",""behindFill"":""1"",""miterLimit"":""11.478339999999999321289578801952302455902099609375"",""width"":""28222"",""rightArrowAttributes"":""0|0|0|0|0|0|0"",""joinType"":""1"",""variableAttributes"":""0|0"",""projectMatrix"":""1,0,0,0,1,0"",""justification"":""0"",""endCaps"":""1"",""rightArrow"":""|0"",""scaleWithObject"":""1"",""dotLength"":""0"",""color"":""CMYK100,USER,255,255,255,255,100,00000000-0000-0000-0000-000000000000"",""dashDotSpec"":""0"",""dash" & "Adjust"":""0"",""overlapArrow"":""0"",""shareArrow"":""0"",""aspect"":""100"",""leftArrow"":""|0""},""transparency"":{}}"
+
+End Sub
+
+Sub DeixaSoCosta()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camadaResult As layer
+    Dim shape As shape
+    Dim grupo As shape
+    Dim subShape As shape
+    Dim excluirGrupo As Boolean
+
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    Set pagina = doc.ActivePage
+
+    ' Refer�ncia � camada "RESULT"
+    On Error Resume Next
+    Set camadaResult = pagina.Layers("RESULT")
+    On Error GoTo 0
+
+    ' Verifica se a camada "RESULT" existe
+    If camadaResult Is Nothing Then
+        MsgBox "A camada 'RESULT' n�o foi encontrada.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Percorre todos os objetos da camada "RESULT"
+    For Each shape In camadaResult.shapes
+        ' Verifica se o objeto � um grupo
+        If shape.Type = cdrGroupShape Then
+            excluirGrupo = False
+            
+            ' Percorre todos os objetos dentro do grupo
+            For Each subShape In shape.shapes
+                ' Verifica se o nome de algum objeto dentro do grupo corresponde aos nomes especificados
+                If subShape.Name = "FRENTE" Or subShape.Name = "MANGAEP" Or subShape.Name = "MANGADP" Or subShape.Name = "PUNHOE" Or subShape.Name = "PUNHOD" Or subShape.Name = "SD" Or subShape.Name = "SE" Then
+                    excluirGrupo = True
+                    Exit For
+                End If
+            Next subShape
+            
+            ' Exclui o grupo se um dos objetos corresponder aos nomes
+            If excluirGrupo Then
+                shape.Delete
+            End If
+        End If
+    Next shape
+
+End Sub
+
+Sub ContornoRetinho()
+    Dim OrigSelection As ShapeRange
+    Set OrigSelection = ActiveSelectionRange
+    OrigSelection(1).Style.StringAssign "{""fill"":{""type"":""1"",""overprint"":""0"",""primaryColor"":""CMYK255,USER,0,0,0,0,100,cccd19cb-4675-4a5e-8bda-d0bbbaab8af0"",""winding"":""0""},""outline"":{""type"":""0"",""overprint"":""0"",""screenSpec"":""0,0,45000000,60,0"",""angle"":""0"",""matrix"":""1,0,0,0,1,0"",""aspect"":""100"",""leftArrow"":""|0"",""width"":""40000"",""dashAdjust"":""0"",""joinType"":""1"",""rightArrowAttributes"":""0|0|0|0|0|0|0"",""dashDotSpec"":""0"",""shareArrow"":""0"",""rightArrow"":""|0"",""projectMatrix"":""1,0,0,0,1,0"",""miterLimit"":""5"",""scaleWithObject"":""1"",""color"":""CMYK,USER,0,0,0,100,100,00000000-0000-0000-0000-000000000000"",""overlapArrow"":""0"",""endCaps"":""0"",""behindFill"":""0"",""leftArrowAttributes"":""0|0|0|0|0|0|0"",""justification"":""2"",""dotLength"":""0""},""transparen" & "cy"":{}}"
+End Sub
+
+Sub AplicaContornoReto()
+    Dim doc As Document
+    Dim sr As ShapeRange
+    Dim shape As shape
+    Dim subShape As shape
+
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+
+    ' Verifica se h� objetos selecionados
+    Set sr = ActiveSelectionRange
+    If sr.Count = 0 Then
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Percorre todos os objetos selecionados
+    For Each shape In sr.shapes
+        ' Verifica se o objeto � um grupo
+        If shape.Type = cdrGroupShape Then
+            ' Percorre todos os objetos dentro do grupo
+            For Each subShape In shape.shapes
+                ' Verifica se o nome do objeto � "x"
+                If subShape.Name = "x" Then
+                    ' Seleciona o objeto e chama a sub ContornoRetinho
+                    subShape.CreateSelection
+                    ContornoRetinho
+                End If
+            Next subShape
+        Else
+            ' Verifica se o nome do objeto � "x"
+            If shape.Name = "x" Then
+                ' Seleciona o objeto e chama a sub ContornoRetinho
+                shape.CreateSelection
+                ContornoRetinho
+            End If
+        End If
+    Next shape
+End Sub
+
+Sub CriaPaginaTemp()
+    Dim p1 As page
+    Dim lr1 As layer
+    
+    ' Insere uma nova p�gina com as dimens�es especificadas e nomeia como "temp"
+    Set p1 = ActiveDocument.InsertPagesEx(1, False, ActivePage.index, 16.535433, 14.96063)
+    p1.Name = "temp"
+    p1.Activate
+    
+    ' Ativa e renomeia a camada "RESULT" na nova p�gina "temp"
+    On Error Resume Next
+    Set lr1 = p1.Layers("RESULT")
+    If lr1 Is Nothing Then
+        Set lr1 = p1.Layers("Camada 1")
+        lr1.Name = "temp"
+        lr1.Activate
+    Else
+        lr1.Name = "temp"
+        lr1.Activate
+    End If
+    On Error GoTo 0
+End Sub
+
+
+Sub ApagarPaginaTemp()
+    Dim p As page
+    
+    ' Procura a p�gina chamada "temp" no documento
+    On Error Resume Next
+    Set p = ActiveDocument.Pages("temp")
+    On Error GoTo 0
+    
+    ' Verifica se a p�gina "temp" foi encontrada
+    If Not p Is Nothing Then
+        p.Delete ' Apaga a p�gina "temp"
+    Else
+        MsgBox "A p�gina 'temp' n�o foi encontrada.", vbExclamation
+    End If
+End Sub
+
+Sub CopiarCamadaResultParaTemp()
+    Dim doc As Document
+    Dim camadaResult As layer
+    Dim camadaTemp As layer
+    Dim camada As layer
+    Dim encontradoResult As Boolean
+    Dim encontradoTemp As Boolean
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+    
+    ' Inicializa as vari�veis de controle
+    encontradoResult = False
+    encontradoTemp = False
+    
+    ' Percorre todas as camadas do documento para encontrar "RESULT" e "temp"
+    For Each camada In doc.Layers
+        If camada.Name = "RESULT" Then
+            Set camadaResult = camada
+            encontradoResult = True
+        ElseIf camada.Name = "temp" Then
+            Set camadaTemp = camada
+            encontradoTemp = True
+        End If
+    Next camada
+    
+    ' Verifica se a camada "RESULT" foi encontrada
+    If Not encontradoResult Then
+        MsgBox "A camada 'RESULT' n�o foi encontrada.", vbExclamation
+        Exit Sub
+    End If
+    
+    ' Verifica se a camada "temp" foi encontrada, caso contr�rio, cria a camada "temp"
+    If Not encontradoTemp Then
+        Set camadaTemp = doc.CreateLayer("temp")
+    End If
+    
+    ' Copia todos os objetos da camada "RESULT" para a camada "temp"
+    If camadaResult.shapes.Count > 0 Then
+        ' Cria a sele��o de todos os objetos na camada "RESULT"
+        camadaResult.shapes.All.CreateSelection
+        ActiveSelection.Copy ' Copia a sele��o
+        camadaTemp.Activate ' Ativa a camada de destino
+        ActiveLayer.Paste ' Cola os objetos na camada "temp"
+    Else
+        MsgBox "N�o h� objetos na camada 'RESULT' para copiar.", vbExclamation
+        Exit Sub
+    End If
+    
+    MsgBox "Conte�do da camada 'RESULT' copiado para a camada 'temp'.", vbInformation
+End Sub
+Sub AplicaContornoGrid()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim shape As shape
+    Dim i As Integer
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+
+    ' Percorre todas as p�ginas do documento
+    For i = 1 To doc.Pages.Count
+        Set pagina = doc.Pages(i)
+
+        ' Percorre todas as camadas da p�gina atual
+        For Each camada In pagina.Layers
+            ' Percorre todos os objetos da camada
+            For Each shape In camada.shapes
+                ' Aplica o estilo ao objeto atual
+                shape.Style.StringAssign "{""fill"":{""overprint"":""0"",""secondaryColor"":""CMYK,USER,0,0,0,0,100,00000000-0000-0000-0000-000000000000"",""type"":""1"",""primaryColor"":""CMYK255,USER,0,0,0,0,100,cccd19cb-4675-4a5e-8bda-d0bbbaab8af0""},""outline"":{""overprint"":""0"",""type"":""0"",""angle"":""0"",""screenSpec"":""0,0,45000000,60,0"",""overlapArrow"":""0"",""leftArrowAttributes"":""0|0|0|0|0|0|0"",""dotLength"":""0"",""width"":""10000"",""dashDotSpec"":""0"",""rightArrow"":""|0"",""endCaps"":""0"",""rightArrowAttributes"":""0|0|0|0|0|0|0"",""variableAttributes"":""0|0"",""scaleWithObject"":""0"",""projectMatrix"":""1,0,0,0,1,0"",""miterLimit"":""5"",""matrix"":""1,0,0,0,1,0"",""aspect"":""100"",""color"":""CMYK255,USER,0,0,0,255,100,00000000-0000-0000-0000-000000000000"",""behindFill"":""0"",""shareArrow"":""0"",""joinType"":""0"",""leftArrow"":""|0"",""dashAdjust"":""0"",""justification"":""1""},""transparency"":{}}"
+            Next shape
+        Next camada
+    Next i
+
+    ' Limpeza de vari�veis
+    Set doc = Nothing
+    Set pagina = Nothing
+End Sub
+Sub RenomeiaCamadasNoGrid()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim i As Integer
+    Dim nomeOriginal As String
+    Dim partes() As String
+    Dim novoNome As String
+    
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+
+    ' Percorre todas as p�ginas do documento
+    For i = 1 To doc.Pages.Count
+        Set pagina = doc.Pages(i)
+
+        ' Percorre todas as camadas da p�gina atual
+        For Each camada In pagina.Layers
+            nomeOriginal = camada.Name ' Obt�m o nome original da camada
+            
+            ' Divide o nome da camada em partes separadas pelo ponto
+            partes = Split(nomeOriginal, ".")
+            
+            ' Verifica se h� pelo menos 3 partes (o que significa 3 pontos no nome)
+            If UBound(partes) >= 3 Then
+                ' Mant�m apenas as 3 primeiras partes e junta de volta com pontos
+                novoNome = partes(0) & "." & partes(1) & "." & partes(2)
+                camada.Name = novoNome ' Renomeia a camada
+            End If
+        Next camada
+    Next i
+
+    ' Limpeza de vari�veis
+    Set doc = Nothing
+    Set pagina = Nothing
+End Sub
+
+Sub ConfiguraNovoGrid()
+    Dim doc As Document
+    Dim pagina As page
+    Dim camada As layer
+    Dim shape As shape
+    Dim i As Integer
+
+    ' Refer�ncia ao documento ativo
+    Set doc = ActiveDocument
+
+    ' Percorre todas as p�ginas do documento
+    For i = 1 To doc.Pages.Count
+        Set pagina = doc.Pages(i)
+
+        ' Percorre todas as camadas da p�gina atual
+        For Each camada In pagina.Layers
+            ' Percorre todos os objetos da camada
+            For Each shape In camada.shapes
+                ' Verifica se o objeto � um grupo e desagrupa
+                If shape.Type = cdrGroupShape Then
+                    shape.Ungroup
+                End If
+            Next shape
+        Next camada
+    Next i
+
+    ' Chama as outras fun��es
+    ExcluirCamadasVazias
+    LimpaObjetosGrid
+    AplicaContornoGrid
+    RenomeiaCamadasNoGrid
+    PreparaGrid
+End Sub
+
+Sub ConfiguraMoldNovo()
+
+    ExcluirCamadasVazias
+    Correcoes.RenomearCamadas
+    Correcoes.RenomearObjetosNoMold
+    
+End Sub
+
+Sub DeleteRectangles()
+    Dim currentPage As page
+    Set currentPage = ActiveDocument.ActivePage
+    
+    ProcessShapes currentPage.shapes
+End Sub
+
+Private Sub ProcessShapes(shapesCollection As shapes)
+    Dim shp As shape
+    Dim i As Integer
+
+    ' Loop de tr�s para frente para evitar erro ao deletar
+    For i = shapesCollection.Count To 1 Step -1
+        Set shp = shapesCollection(i)
+
+        ' Ignora grupos
+        If shp.Type = cdrGroupShape Then
+            ' Ignora o grupo e n�o verifica shapes dentro dele
+        Else
+            ' Se contiver subshapes (como em PowerClip, etc.), percorre
+            If shp.shapes.Count > 0 Then
+                ProcessShapes shp.shapes
+            End If
+
+            ' Se o tipo for curva (por exemplo, ret�ngulo convertido em curvas)
+            If shp.Type = cdrCurveShape Then
+                shp.Delete
+            End If
+        End If
+    Next i
+End Sub
+
+Sub SomaAlturasSelecionadasEmMetros()
+    Dim sel As ShapeRange
+    Dim shp As shape
+    Dim alturaTotal As Double
+    Dim unidade As cdrUnit
+    Dim fatorConversao As Double
+    Dim resultadoTexto As String
+
+    ' Verifica se h� sele��o
+    If ActiveSelection.shapes.Count = 0 Then
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+        Exit Sub
+    End If
+
+    Set sel = ActiveSelectionRange
+    alturaTotal = 0
+
+    ' Detecta a unidade atual do documento
+    unidade = ActiveDocument.Unit
+
+    ' Define fator de convers�o para metros
+    Select Case unidade
+        Case cdrMillimeter:     fatorConversao = 0.001
+        Case cdrCentimeter:     fatorConversao = 0.01
+        Case cdrMeter:          fatorConversao = 1
+        Case cdrInch:           fatorConversao = 0.0254
+        Case cdrFoot:           fatorConversao = 0.3048
+        Case cdrYard:           fatorConversao = 0.9144
+        Case Else
+            MsgBox "Unidade n�o reconhecida. Por favor, use mil�metros, cent�metros ou metros.", vbExclamation
+            Exit Sub
+    End Select
+
+    ' Soma as alturas e converte para metros
+    For Each shp In sel
+        alturaTotal = alturaTotal + shp.SizeHeight * fatorConversao
+    Next shp
+
+    ' Formata o resultado
+    resultadoTexto = Format(alturaTotal, "0.00") & "m"
+
+    ' Copia para a �rea de transfer�ncia
+    CopiaParaAreaDeTransferencia resultadoTexto
+
+    ' Exibe o resultado
+    MsgBox "Altura total: " & resultadoTexto & vbCrLf & _
+           "(valor copiado para a �rea de transfer�ncia)", vbInformation
+End Sub
+
+' Fun��o que copia texto para a �rea de transfer�ncia
+Sub CopiaParaAreaDeTransferencia(texto As String)
+    Dim clipboard As New DataObject
+    clipboard.SetText texto
+    clipboard.PutInClipboard
+End Sub
+
+
+
+Sub SomaMedidasSelecionadas()
+    Dim sel As ShapeRange
+    Dim shp As shape
+    Dim totalAltura As Double
+    Dim totalLargura As Double
+    Dim unidade As cdrUnit
+    Dim fatorConversao As Double
+    Dim escolha As String
+    Dim msg As String
+    Dim textoCopiar As String
+
+    ' Verifica se h� sele��o
+    If ActiveSelection.shapes.Count = 0 Then
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Pergunta ao usu�rio qual medida deseja somar
+    escolha = InputBox("O que voc� deseja somar?" & vbCrLf & vbCrLf & _
+                       "1 - Altura" & vbCrLf & _
+                       "2 - Largura" & vbCrLf & _
+                       "3 - Ambas", "Soma de Medidas", "3")
+
+    If escolha = "" Then Exit Sub ' Cancelado
+    If Not IsNumeric(escolha) Or Val(escolha) < 1 Or Val(escolha) > 3 Then
+        MsgBox "Op��o inv�lida. Use 1, 2 ou 3.", vbExclamation
+        Exit Sub
+    End If
+
+    ' Define o fator de convers�o com base na unidade do documento
+    unidade = ActiveDocument.Unit
+    Select Case unidade
+        Case cdrMillimeter:     fatorConversao = 0.001
+        Case cdrCentimeter:     fatorConversao = 0.01
+        Case cdrMeter:          fatorConversao = 1
+        Case cdrInch:           fatorConversao = 0.0254
+        Case cdrFoot:           fatorConversao = 0.3048
+        Case cdrYard:           fatorConversao = 0.9144
+        Case Else
+            MsgBox "Unidade n�o reconhecida. Por favor, use mm, cm ou m.", vbExclamation
+            Exit Sub
+    End Select
+
+    ' Soma conforme a escolha
+    Set sel = ActiveSelectionRange
+    totalAltura = 0
+    totalLargura = 0
+
+    For Each shp In sel
+        If escolha = "1" Or escolha = "3" Then
+            totalAltura = totalAltura + shp.SizeHeight * fatorConversao
+        End If
+        If escolha = "2" Or escolha = "3" Then
+            totalLargura = totalLargura + shp.SizeWidth * fatorConversao
+        End If
+    Next shp
+
+    ' Monta a mensagem e define o conte�do a ser copiado
+    msg = sel.Count & " objeto(s) selecionado(s)" & vbCrLf
+
+    If escolha = "1" Then
+        msg = msg & "Altura total: " & Format(totalAltura, "0.00") & " metros"
+        textoCopiar = Replace(Format(totalAltura, "0.00"), ".", ",") & "m"
+        
+    ElseIf escolha = "2" Then
+        msg = msg & "Largura total: " & Format(totalLargura, "0.00") & " metros"
+        textoCopiar = Replace(Format(totalLargura, "0.00"), ".", ",") & "m"
+        
+    ElseIf escolha = "3" Then
+        msg = msg & "Altura total: " & Format(totalAltura, "0.00") & " metros" & vbCrLf
+        msg = msg & "Largura total: " & Format(totalLargura, "0.00") & " metros"
+        textoCopiar = Replace(Format(totalLargura, "0.00"), ".", ",") & "x" & Replace(Format(totalAltura, "0.00"), ".", ",") & "m"
+    End If
+
+    ' Copia o resultado para a �rea de transfer�ncia
+    CopiaParaAreaDeTransferencia textoCopiar
+
+    ' Exibe o resultado
+    MsgBox msg & vbCrLf & vbCrLf & "(valor copiado para a �rea de transfer�ncia)", vbInformation, "Resultado da Soma"
+End Sub
+
+Sub MostrarTipoDeObjetoSelecionado()
+    Dim sel As ShapeRange
+    Dim shp As shape
+    Dim tipoTecnico As String
+    Dim tipoAmigavel As String
+    Dim msg As String
+
+    ' Verifica se h� objetos selecionados
+    If ActiveSelection.shapes.Count = 0 Then
+        MsgBox "Nenhum objeto selecionado.", vbExclamation
+        Exit Sub
+    End If
+
+    Set sel = ActiveSelectionRange
+    msg = "Tipo dos objetos selecionados:" & vbCrLf & vbCrLf
+
+    ' Percorre os objetos selecionados
+    For Each shp In sel
+        Select Case shp.Type
+            Case cdrRectangleShape
+                tipoTecnico = "cdrRectangleShape": tipoAmigavel = "Ret�ngulo"
+            Case cdrEllipseShape
+                tipoTecnico = "cdrEllipseShape": tipoAmigavel = "Elipse"
+            Case cdrCurveShape
+                tipoTecnico = "cdrCurveShape": tipoAmigavel = "Curva"
+            Case cdrTextShape
+                tipoTecnico = "cdrTextShape": tipoAmigavel = "Texto"
+            Case cdrGroupShape
+                tipoTecnico = "cdrGroupShape": tipoAmigavel = "Grupo"
+            Case cdrBitmapShape
+                tipoTecnico = "cdrBitmapShape": tipoAmigavel = "Bitmap"
+            Case cdrPolygonShape
+                tipoTecnico = "cdrPolygonShape": tipoAmigavel = "Pol�gono"
+            Case cdrBlendGroupShape
+                tipoTecnico = "cdrBlendGroupShape": tipoAmigavel = "Blend"
+            Case cdrPowerClipShape
+                tipoTecnico = "cdrPowerClipShape": tipoAmigavel = "PowerClip"
+            Case cdrSymbolShape
+                tipoTecnico = "cdrSymbolShape": tipoAmigavel = "S�mbolo"
+            Case Else
+                tipoTecnico = "Desconhecido (" & shp.Type & ")": tipoAmigavel = "Outro"
+        End Select
+
+        msg = msg & "- " & tipoTecnico & " - " & tipoAmigavel & vbCrLf
+    Next shp
+
+    MsgBox msg, vbInformation, "Tipos de Objetos"
+End Sub
+
